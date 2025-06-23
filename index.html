@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BXP Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="tracker-window" style="position:absolute;top:50px;left:50px;">
+    <div id="drag-handle" style="cursor: move; font-weight: bold;">BXP Tracker</div>
+    <h2 id="job">Job: Unknown</h2>
+    <div id="total-bxp">BXP: 0</div>
+    <div id="bxp-per-hour" class="stat-toggle" style="display:none;">BXP/hr: —</div>
+    <div id="bxp-per-minute" class="stat-toggle" style="display:none;">BXP/min: —</div>
+  </div>
+
+  <div id="settings-icon" title="Settings" style="position:absolute;top:10px;left:10px;">⚙️</div>
+
+  <div id="settings-panel" style="display: none; position:absolute;top:10px;right:10px;">
+    <label><input type="checkbox" id="toggle-bxp-hr"> Show BXP/hr</label><br>
+    <label><input type="checkbox" id="toggle-bxp-min"> Show BXP/min</label><br>
+    <input type="range" id="transparency-slider" min="0" max="1" step="0.01" value="0.85">
+    <button id="reset-bxp-log">Reset BXP Tracking</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
