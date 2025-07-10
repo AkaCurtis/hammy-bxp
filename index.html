@@ -2,27 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BXP Tracker</title>
+  <title>BXP Multi-Job Tracker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="tracker-window" style="position:absolute;top:50px;left:50px;">
-    <div id="drag-handle" style="cursor: move; font-weight: bold;">BXP Tracker</div>
-    <h2 id="job">Job: Unknown</h2>
-    <div id="total-bxp">BXP: 0</div>
-    <div id="bxp-per-hour" class="stat-toggle" style="display:none;">BXP/hr: —</div>
-    <div id="bxp-per-minute" class="stat-toggle" style="display:none;">BXP/min: —</div>
+  <div id="tracker-app" class="new-ui" style="position:absolute; left:40px; top:40px;">
+    <header id="drag-handle">
+      <div class="drag-title">BXP Tracker</div>
+      <div id="settings-icon" title="Settings">⚙️</div>
+    </header>
+    <main>
+    <section id="job-select-section">
+      <label>
+        <button id="toggle-job-list">▶</button> Select jobs:
+      </label>
+      <div id="job-list" style="display: none;"></div>
+    </section>
+
+      <section id="bxp-summary-section">
+        <table>
+          <thead>
+            <tr><th>Job</th><th>BXP</th><th>BXP/hr</th><th>BXP/min</th></tr>
+          </thead>
+          <tbody id="summary-tbody"></tbody>
+        </table>
+      </section>
+    </main>
+    <aside id="settings-panel" style="display:none;">
+      <label><input type="checkbox" id="toggle-bxp-hr" checked> Show BXP/hr</label><br>
+      <label><input type="checkbox" id="toggle-bxp-min" checked> Show BXP/min</label><br>
+      <button id="reset-bxp-log">Reset BXP Tracking</button>
+    </aside>
   </div>
-
-  <div id="settings-icon" title="Settings" style="position:absolute;top:10px;left:10px;">⚙️</div>
-
-  <div id="settings-panel" style="display: none; position:absolute;top:10px;right:10px;">
-    <label><input type="checkbox" id="toggle-bxp-hr"> Show BXP/hr</label><br>
-    <label><input type="checkbox" id="toggle-bxp-min"> Show BXP/min</label><br>
-    <input type="range" id="transparency-slider" min="0" max="1" step="0.01" value="0.85">
-    <button id="reset-bxp-log">Reset BXP Tracking</button>
-  </div>
-
   <script src="script.js"></script>
 </body>
 </html>
