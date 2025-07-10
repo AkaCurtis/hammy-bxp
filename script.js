@@ -187,19 +187,21 @@ window.addEventListener('message', (event) => {
 
     if (!bxpLogs[jobKey]) bxpLogs[jobKey] = [];
 
-    if (typeof lastBxp[jobKey] !== "number") {
+    const previousAmount = lastBxp[jobKey];
+
+    if (typeof previousAmount !== "number") {
       bxpLogs[jobKey].push({ time: now - 1000, bxp: amount });
       hasFirstGain[jobKey] = true;
-    }
-
-    if (amount !== lastBxp[jobKey]) {
+    } else if (amount !== previousAmount) {
       bxpLogs[jobKey].push({ time: now, bxp: amount });
+
       if (bxpLogs[jobKey].length > 120) {
         bxpLogs[jobKey] = bxpLogs[jobKey].slice(-120);
       }
     }
 
     lastBxp[jobKey] = amount;
+
   });
 
   renderSummary();
