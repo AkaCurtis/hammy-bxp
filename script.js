@@ -176,7 +176,14 @@ window.addEventListener('message', (event) => {
     const expectedKey = jobInfo.bxpTokenKey;
     const altKey = expectedKey.replace("exp_token_a|", "exp_token|");
 
-    const amount = invObj[expectedKey]?.amount ?? invObj[altKey]?.amount ?? 0;
+    const primaryAmount = invObj[expectedKey]?.amount ?? 0;
+    const secondaryAmount = invObj[altKey]?.amount ?? 0;
+    const combinedAmount = primaryAmount + secondaryAmount;
+
+    if (primaryAmount === 0 && secondaryAmount === 0 && !(expectedKey in invObj) && !(altKey in invObj)) return;
+
+    const amount = combinedAmount;
+
 
     if (!bxpLogs[jobKey]) bxpLogs[jobKey] = [];
 
