@@ -1,7 +1,6 @@
 const SELECTED_JOBS_KEY = "bxp_selected_jobs";
 const TRACKER_POSITION_KEY = "bxp_tracker_position";
 
-
 const JOBS = [
   { key: "business", label: "Business" },
   { key: "cargopilot", label: "Cargo" },
@@ -23,7 +22,6 @@ const JOBS = [
   { key: "trucker", label: "Trucking" },
   { key: "busdriver", label: "Bus Driver" }
 ];
-
 
 const JOB_BXP_KEYS = {
   trucker:       { bxpTokenKey: "exp_token_a|trucking|trucking", label: "Trucking BXP" },
@@ -98,14 +96,13 @@ function loadSelectedJobs() {
   }
 }
 
-
 function renderSummary() {
   summaryTbody.innerHTML = '';
   selectedJobs.forEach(jobKey => {
     const jobObj = JOBS.find(j => j.key === jobKey);
     const bxp = typeof lastBxp[jobKey] === "number" ? lastBxp[jobKey] : 0;
     const bxpPerHour = getBxpPerHour(jobKey);
-    const bxpPerMinute = bxpPerHour !== null ? Math.round(bxpPerHour/60) : null;
+    const bxpPerMinute = getBxpPerMinute(jobKey);
     const showHr = toggleBxpHr.checked;
     const showMin = toggleBxpMin.checked;
     summaryTbody.innerHTML += `
@@ -147,6 +144,11 @@ function getBxpPerHour(jobKey) {
   return Math.round(hybridBXPH);
 }
 
+function getBxpPerMinute(jobKey) {
+  const perHour = getBxpPerHour(jobKey);
+  return perHour !== null ? Math.round(perHour / 60) : null;
+}
+
 window.addEventListener('message', (event) => {
   const msg = event.data;
   if (!msg || msg.type !== "data" || !msg.data) return;
@@ -180,10 +182,10 @@ window.addEventListener('message', (event) => {
     const secondaryAmount = invObj[altKey]?.amount ?? 0;
     const combinedAmount = primaryAmount + secondaryAmount;
 
+    // Only update logs if there is a BXP key present
     if (primaryAmount === 0 && secondaryAmount === 0 && !(expectedKey in invObj) && !(altKey in invObj)) return;
 
     const amount = combinedAmount;
-
 
     if (!bxpLogs[jobKey]) bxpLogs[jobKey] = [];
 
@@ -201,12 +203,10 @@ window.addEventListener('message', (event) => {
     }
 
     lastBxp[jobKey] = amount;
-
   });
 
   renderSummary();
 });
-
 
 function cleanJobKey(rawJob) {
   return rawJob.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -260,7 +260,6 @@ toggleBxpHr.onchange = toggleBxpMin.onchange = renderSummary;
   });
 })();
 
-
 const escapeListener = (e) => {
   if (e.key === "Escape") {
     window.parent.postMessage({ type: "pin" }, "*");
@@ -276,7 +275,6 @@ document.getElementById('toggle-job-list').onclick = () => {
   toggleBtn.textContent = currentlyVisible ? '▶' : '▼';
 };
 
-
 function restoreTrackerPosition() {
   const pos = localStorage.getItem(TRACKER_POSITION_KEY);
   if (pos) {
@@ -287,8 +285,6 @@ function restoreTrackerPosition() {
     } catch {}
   }
 }
-
-
 
 function init() {
   loadSelectedJobs();
