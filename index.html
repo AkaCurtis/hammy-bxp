@@ -12,15 +12,14 @@
       <div id="settings-icon" title="Settings">⚙️</div>
     </header>
     <main>
-    <section id="job-select-section">
-      <label>
-        <button id="toggle-job-list">▶</button> Select jobs:
-      </label>
-      <div id="job-list" style="display: none;"></div>
-    </section>
-
+      <section id="job-select-section">
+        <label>
+          <button id="toggle-job-list">▶</button> Select jobs:
+        </label>
+        <div id="job-list" style="display: none;"></div>
+      </section>
       <section id="bxp-summary-section">
-        <table>
+        <table id="bxp-summary-table">
           <thead>
             <tr><th>Job</th><th>BXP</th><th>BXP/hr</th><th>BXP/min</th></tr>
           </thead>
@@ -28,12 +27,20 @@
         </table>
       </section>
     </main>
-    <aside id="settings-panel" style="display:none;">
-      <label><input type="checkbox" id="toggle-bxp-hr" checked> Show BXP/hr</label><br>
-      <label><input type="checkbox" id="toggle-bxp-min" checked> Show BXP/min</label><br>
-      <button id="reset-bxp-log">Reset BXP Tracking</button>
-    </aside>
+    <div id="resize-handle" title="Resize"></div>
   </div>
+
+  <!-- Moved OUTSIDE tracker-app -->
+  <aside id="settings-panel" style="display:none;">
+    <label><input type="checkbox" id="toggle-bxp-hr" checked> Show BXP/hr</label><br>
+    <label><input type="checkbox" id="toggle-bxp-min" checked> Show BXP/min</label><br>
+    <label for="bxp-font-size">Info Font Size</label>
+    <input type="range" id="bxp-font-size" min="12" max="36" value="13" step="1" />
+    <span id="bxp-font-size-value">13</span>px
+    <br>
+    <button id="reloadButton">🔄 Reload UI</button>
+    <button id="reset-bxp-log">Reset BXP Tracking</button>
+  </aside>
   <script src="script.js"></script>
 </body>
 </html>
