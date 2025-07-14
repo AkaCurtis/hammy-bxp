@@ -1,5 +1,7 @@
 const SELECTED_JOBS_KEY = "bxp_selected_jobs";
 const TRACKER_POSITION_KEY = "bxp_tracker_position";
+const TRACKER_SIZE_KEY = "bxp_tracker_size";
+const BXP_FONT_SIZE_KEY = "bxp-row-font-size";
 
 const JOBS = [
   { key: "business", label: "Business" },
@@ -45,6 +47,7 @@ const JOB_BXP_KEYS = {
   strength:      { bxpTokenKey: "exp_token_a|physical|strength", label: "Strength BXP" },
 };
 
+
 let selectedJobs = new Set();
 let bxpLogs = {};
 let lastBxp = {};
@@ -57,6 +60,82 @@ const settingsIcon = document.getElementById('settings-icon');
 const toggleBxpHr = document.getElementById('toggle-bxp-hr');
 const toggleBxpMin = document.getElementById('toggle-bxp-min');
 const trackerApp = document.getElementById('tracker-app');
+const resizeHandle = document.getElementById('resize-handle');
+
+function loadBxpFontSize() {
+  const size = localStorage.getItem(BXP_FONT_SIZE_KEY) || "13";
+  document.getElementById("bxp-font-size").value = size;
+  document.getElementById("bxp-font-size-value").textContent = size;
+  document.getElementById("bxp-summary-table").style.setProperty("--bxp-row-font-size", size + "px");
+}
+function saveBxpFontSize(size) {
+  localStorage.setItem(BXP_FONT_SIZE_KEY, size);
+  document.getElementById("bxp-font-size-value").textContent = size;
+  document.getElementById("bxp-summary-table").style.setProperty("--bxp-row-font-size", size + "px");
+}
+document.getElementById("bxp-font-size").addEventListener("input", function() {
+  saveBxpFontSize(this.value);
+});
+
+(function enableResize() {
+  let isResizing = false;
+  let startX = 0, startY = 0, startW = 0, startH = 0;
+
+  resizeHandle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    isResizing = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    const rect = trackerApp.getBoundingClientRect();
+    startW = rect.width;
+    startH = rect.height;
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isResizing) return;
+
+    const newW = Math.max(300, Math.min(window.innerWidth, startW + (e.clientX - startX)));
+    const newH = Math.max(120, Math.min(window.innerHeight, startH + (e.clientY - startY)));
+    trackerApp.style.width = newW + "px";
+    trackerApp.style.height = newH + "px";
+
+    if (settingsPanel.style.display === 'block') {
+      const trackerRect = trackerApp.getBoundingClientRect();
+      settingsPanel.style.top = `${trackerRect.top}px`;
+      settingsPanel.style.left = `${trackerRect.right + 10}px`;
+    }
+  });
+
+
+  document.addEventListener('mouseup', function() {
+    if (isResizing) {
+      isResizing = false;
+      document.body.style.userSelect = '';
+      localStorage.setItem(TRACKER_SIZE_KEY, JSON.stringify({
+        width: trackerApp.style.width,
+        height: trackerApp.style.height
+      }));
+      trackerApp.classList.add("user-resized");
+    }
+  });
+})();
+
+function restoreTrackerSize() {
+  const size = localStorage.getItem(TRACKER_SIZE_KEY);
+  if (size) {
+    try {
+      const { width, height } = JSON.parse(size);
+      trackerApp.style.width = width;
+      trackerApp.style.height = height;
+      trackerApp.classList.add("user-resized");
+    } catch {}
+  } else {
+    trackerApp.style.width = "auto";
+    trackerApp.style.height = "auto";
+    trackerApp.classList.remove("user-resized");
+  }
+}
 
 function renderJobList() {
   jobListEl.innerHTML = '';
@@ -98,23 +177,38 @@ function loadSelectedJobs() {
 
 function renderSummary() {
   summaryTbody.innerHTML = '';
+
+  const showHr = toggleBxpHr.checked;
+  const showMin = toggleBxpMin.checked;
+
+  const table = document.getElementById('bxp-summary-table');
+  const thead = table.querySelector('thead');
+  thead.innerHTML = `
+    <tr>
+      <th>Job</th>
+      <th>BXP</th>
+      ${showHr ? '<th>BXP/hr</th>' : ''}
+      ${showMin ? '<th>BXP/min</th>' : ''}
+    </tr>
+  `;
+
   selectedJobs.forEach(jobKey => {
     const jobObj = JOBS.find(j => j.key === jobKey);
     const bxp = typeof lastBxp[jobKey] === "number" ? lastBxp[jobKey] : 0;
     const bxpPerHour = getBxpPerHour(jobKey);
     const bxpPerMinute = getBxpPerMinute(jobKey);
-    const showHr = toggleBxpHr.checked;
-    const showMin = toggleBxpMin.checked;
+
     summaryTbody.innerHTML += `
       <tr>
-      <td>${jobObj.label}</td>
-      <td>${bxp.toLocaleString()}</td>
-      <td>${showHr && bxpPerHour !== null ? bxpPerHour.toLocaleString() : '—'}</td>
-      <td>${showMin && bxpPerMinute !== null ? bxpPerMinute.toLocaleString() : '—'}</td>
+        <td>${jobObj.label}</td>
+        <td>${bxp.toLocaleString()}</td>
+        ${showHr ? `<td>${bxpPerHour !== null ? bxpPerHour.toLocaleString() : '—'}</td>` : ''}
+        ${showMin ? `<td>${bxpPerMinute !== null ? bxpPerMinute.toLocaleString() : '—'}</td>` : ''}
       </tr>
     `;
   });
 }
+
 
 function getBxpPerHour(jobKey) {
   const log = bxpLogs[jobKey] || [];
@@ -182,7 +276,6 @@ window.addEventListener('message', (event) => {
     const secondaryAmount = invObj[altKey]?.amount ?? 0;
     const combinedAmount = primaryAmount + secondaryAmount;
 
-    // Only update logs if there is a BXP key present
     if (primaryAmount === 0 && secondaryAmount === 0 && !(expectedKey in invObj) && !(altKey in invObj)) return;
 
     const amount = combinedAmount;
@@ -216,9 +309,29 @@ function normalizeJobKey(rawJob) {
   return JOB_BXP_KEYS[cleaned] ? cleaned : cleaned;
 }
 
+function updateSettingsPanelPosition() {
+  const settings = document.getElementById("settings-panel");
+  if (settings.style.display !== 'none') {
+    const rect = trackerApp.getBoundingClientRect();
+    settings.style.top = `${rect.top}px`;
+    settings.style.left = `${rect.right + 10}px`;
+  }
+}
+
 settingsIcon.onclick = () => {
-  settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+  const settings = document.getElementById("settings-panel");
+  const trackerRect = trackerApp.getBoundingClientRect();
+
+  if (settings.style.display === 'none' || settings.style.display === '') {
+    settings.style.position = 'absolute';
+    settings.style.top = `${trackerRect.top}px`;
+    settings.style.left = `${trackerRect.right + 10}px`;
+    settings.style.display = 'block';
+  } else {
+    settings.style.display = 'none';
+  }
 };
+
 document.getElementById('reset-bxp-log').onclick = () => {
   bxpLogs = {};
   hasFirstGain = {};
@@ -243,16 +356,26 @@ toggleBxpHr.onchange = toggleBxpMin.onchange = renderSummary;
 
   document.addEventListener('mousemove', (e) => {
     if (isDragging) {
-      trackerApp.style.left = (e.clientX - dragOffsetX) + "px";
-      trackerApp.style.top = (e.clientY - dragOffsetY) + "px";
+      const newLeft = e.clientX - dragOffsetX;
+      const newTop = e.clientY - dragOffsetY;
+
+      trackerApp.style.left = `${newLeft}px`;
+      trackerApp.style.top = `${newTop}px`;
       trackerApp.style.position = "absolute";
 
       localStorage.setItem(TRACKER_POSITION_KEY, JSON.stringify({
         left: trackerApp.style.left,
         top: trackerApp.style.top
       }));
+
+      if (settingsPanel.style.display === 'block') {
+        const trackerRect = trackerApp.getBoundingClientRect();
+        settingsPanel.style.top = `${trackerRect.top}px`;
+        settingsPanel.style.left = `${trackerRect.right + 10}px`;
+      }
     }
   });
+
 
   document.addEventListener('mouseup', () => {
     isDragging = false;
@@ -275,6 +398,11 @@ document.getElementById('toggle-job-list').onclick = () => {
   toggleBtn.textContent = currentlyVisible ? '▶' : '▼';
 };
 
+document.getElementById("reloadButton").addEventListener("click", function () {
+  window.location.reload();
+});
+
+
 function restoreTrackerPosition() {
   const pos = localStorage.getItem(TRACKER_POSITION_KEY);
   if (pos) {
@@ -289,8 +417,26 @@ function restoreTrackerPosition() {
 function init() {
   loadSelectedJobs();
   restoreTrackerPosition();
+  restoreTrackerSize();
+  loadBxpFontSize();
+
+  try {
+    const storedLogs = JSON.parse(localStorage.getItem("bxp_logs") || "{}");
+    const storedLast = JSON.parse(localStorage.getItem("bxp_last") || "{}");
+    const storedFirst = JSON.parse(localStorage.getItem("bxp_first") || "{}");
+
+    bxpLogs = storedLogs;
+    lastBxp = storedLast;
+    hasFirstGain = storedFirst;
+  } catch (e) {
+    console.warn("⚠️ Failed to restore BXP data from localStorage");
+  }
+
   renderJobList();
   renderSummary();
+
+  window.parent.postMessage({ type: "getData" }, "*");
 }
+
 
 init();
